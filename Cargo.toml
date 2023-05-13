@@ -1,0 +1,7 @@
+[workspace]
+members = [
+  "ruvex",
+  "ruvex_config",
+  "ruvex_commands",
+  "ruvex_utils",
+]
