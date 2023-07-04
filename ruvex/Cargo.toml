@@ -1,5 +1,5 @@
 [package]
-name = "ruvex_utils"
+name = "ruvex"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 ruvex_config = {path="../ruvex_config"}
-thiserror = "1.0.40"
-regex="1"
+ruvex_utils = {path="../ruvex_utils"}
+ruvex_commands = {path="../ruvex_commands"}
 clap = { version = "4.2.7", features = ["derive"] }
+anyhow = "1.0.8"

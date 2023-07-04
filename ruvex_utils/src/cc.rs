@@ -145,7 +145,15 @@ mod tests {
     use crate::ConventionalCommit;
     use ruvex_config::Config;
     fn test_cc(cc_message: &str, cc_types: Vec<String>, sha: &str, cc_check: ConventionalCommit) {
-        let cc = ConventionalCommit::new(cc_message, &Config { cc_types }, sha.to_owned()).unwrap();
+        let cc = ConventionalCommit::new(
+            cc_message,
+            &Config {
+                cc_types,
+                check: None,
+            },
+            sha.to_owned(),
+        )
+        .unwrap();
         assert_eq!(cc, cc_check);
     }
     fn test_cc_error(
@@ -154,7 +162,14 @@ mod tests {
         sha: &str,
         error: ConventionalCommitParseError,
     ) {
-        let cc = ConventionalCommit::new(cc_message, &Config { cc_types }, sha.to_owned());
+        let cc = ConventionalCommit::new(
+            cc_message,
+            &Config {
+                cc_types,
+                check: None,
+            },
+            sha.to_owned(),
+        );
         assert_eq!(cc.unwrap_err(), error);
     }
     #[test]

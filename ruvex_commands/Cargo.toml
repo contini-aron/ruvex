@@ -1,11 +1,12 @@
 [package]
-name = "ruvex_config"
+name = "ruvex_commands"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.8"
-serde = {version = "1.0", features = ["derive"]}
-serde_yaml = "0.9"
+prettytable-rs = "0.10"
+ruvex_config = {path="../ruvex_config"}
+ruvex_utils = {path="../ruvex_utils"}
+thiserror = "1.0.40"
