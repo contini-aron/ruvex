@@ -1,4 +1,5 @@
 use crate::errors::CheckError;
+use colored::Colorize;
 use prettytable::{color, Attr, Cell, Row, Table};
 use ruvex_config::Config;
 use ruvex_utils::ConventionalCommit;
@@ -27,17 +28,28 @@ pub fn check(
     return_n: Option<usize>,
     config: &Config,
 ) -> Result<(), CheckError> {
+    let sep = "################################################";
+    println!("\n{}\n# CHECK\n{}", sep, sep);
     let mut cmd = Command::new("git");
+    let mut log_print = Command::new("git");
     cmd.arg("log");
-    cmd.arg("--no-decorate");
-    cmd.arg("--format=\"%h%n%B\"");
+    log_print.arg("log");
     if let Some(name) = name {
         if let Some(diff) = diff {
+            log_print.arg([diff.clone(), "..".to_string(), name.clone()].concat());
             cmd.arg([diff, "..".to_string(), name].concat());
         } else {
             cmd.arg(name);
         }
     }
+    log_print.arg("--oneline");
+    log_print.arg("--graph");
+    print!(
+        "LOG:\n{}",
+        String::from_utf8(log_print.output().unwrap().stdout).unwrap()
+    );
+    cmd.arg("--no-decorate");
+    cmd.arg("--format=\"%h%n%B\"");
     let result = String::from_utf8(cmd.output().unwrap().stdout).unwrap();
     //println!("{:#?}", &result);
     let rows = result.split("\"\n");
@@ -93,6 +105,10 @@ pub fn check(
             commits.len() + err_commits.len()
         )))
     } else {
+        println!(
+            "{}",
+            format!("\n\nAll commits out of {} checked are ok", commits.len()).green()
+        );
         Ok(())
     }
 }

@@ -15,12 +15,10 @@ pub struct Check {
 impl Config {
     pub fn new(config_path: &str, default_config_path: &str) -> anyhow::Result<Config> {
         if std::fs::metadata(config_path).is_ok() {
+        } else if default_config_path == config_path {
+            return Err(anyhow::Error::msg("default path is not a real path"));
         } else {
-            if default_config_path == config_path {
-                return Err(anyhow::Error::msg("default path is not a real path"));
-            } else {
-                return Err(anyhow::Error::msg("provided path: {}\n does NOT exists"));
-            }
+            return Err(anyhow::Error::msg("provided path: {}\n does NOT exists"));
         }
         // Open the file in read-only mode with buffer.
         let file = std::fs::File::open(config_path)?;
@@ -42,8 +40,20 @@ impl Config {
         serde_yaml::to_writer(f, &Self::default()).unwrap()
     }
 
-    pub fn default() -> Self {
-        return Self {
+    pub fn cc_type_in_config(&self, to_check: &str) -> bool {
+        let mut commit_type_is_cc: bool = false;
+        for cc_check in &self.cc_types {
+            if to_check == cc_check {
+                commit_type_is_cc = true;
+            }
+        }
+        commit_type_is_cc
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
             cc_types: vec![
                 "feat".to_owned(),
                 "fix".to_owned(),
@@ -54,16 +64,6 @@ impl Config {
                 name: None,
                 diff: None,
             }),
-        };
-    }
-
-    pub fn cc_type_in_config(&self, to_check: &str) -> bool {
-        let mut commit_type_is_cc: bool = false;
-        for cc_check in &self.cc_types {
-            if to_check == cc_check {
-                commit_type_is_cc = true;
-            }
         }
-        commit_type_is_cc
     }
 }
