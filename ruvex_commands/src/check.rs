@@ -1,4 +1,4 @@
-use crate::errors::CheckError;
+use anyhow;
 use colored::Colorize;
 use prettytable::{color, Attr, Cell, Row, Table};
 use ruvex_config::Config;
@@ -27,7 +27,7 @@ pub fn check(
     diff: Option<String>,
     return_n: Option<usize>,
     config: &Config,
-) -> Result<(), CheckError> {
+) -> anyhow::Result<()> {
     let sep = "################################################";
     println!("\n{}\n# CHECK\n{}", sep, sep);
     let mut cmd = Command::new("git");
@@ -39,18 +39,32 @@ pub fn check(
             log_print.arg([diff.clone(), "..".to_string(), name.clone()].concat());
             cmd.arg([diff, "..".to_string(), name].concat());
         } else {
+            log_print.arg(name.clone());
             cmd.arg(name);
         }
     }
     log_print.arg("--oneline");
     log_print.arg("--graph");
+    //println!("{:?}", log_print);
     print!(
         "LOG:\n{}",
         String::from_utf8(log_print.output().unwrap().stdout).unwrap()
     );
     cmd.arg("--no-decorate");
     cmd.arg("--format=\"%h%n%B\"");
-    let result = String::from_utf8(cmd.output().unwrap().stdout).unwrap();
+    //println!("{:?}", cmd);
+    let out = cmd.output().unwrap();
+    //println!("{:?}", out);
+    if !out.stderr.is_empty() {
+        return Err(anyhow::Error::msg(
+            format!(
+                "git command error:\n{}",
+                String::from_utf8(out.stderr).unwrap()
+            )
+            .red(),
+        ));
+    }
+    let result = String::from_utf8(out.stdout).unwrap();
     //println!("{:#?}", &result);
     let rows = result.split("\"\n");
     //println!("{:#?}", &rows);
@@ -99,11 +113,14 @@ pub fn check(
     }
     if err_commits.len() > 1 {
         err_commits.printstd();
-        Err(CheckError::CCNotCompliant(format!(
-            "found {} bad commits out of {}",
-            err_commits.len() - 1,
-            commits.len() + err_commits.len()
-        )))
+        Err(anyhow::Error::msg(
+            format!(
+                "\nCommit History not cc compliant: \nfound {} bad commits out of {}",
+                err_commits.len() - 1,
+                commits.len() + err_commits.len()
+            )
+            .red(),
+        ))
     } else {
         println!(
             "{}",
