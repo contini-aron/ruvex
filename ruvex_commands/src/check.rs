@@ -44,6 +44,7 @@ pub fn check(
         }
     }
     log_print.arg("--oneline");
+    log_print.arg("--decorate");
     log_print.arg("--graph");
     //println!("{:?}", log_print);
     print!(
@@ -68,6 +69,7 @@ pub fn check(
     //println!("{:#?}", &result);
     let rows = result.split("\"\n");
     //println!("{:#?}", &rows);
+    //println!("{:#?}", rows.clone().count());
 
     let mut commits: Vec<ConventionalCommit> = Vec::new();
 
@@ -111,6 +113,7 @@ pub fn check(
             }
         }
     }
+
     if err_commits.len() > 1 {
         err_commits.printstd();
         Err(anyhow::Error::msg(
@@ -118,6 +121,14 @@ pub fn check(
                 "\nCommit History not cc compliant: \nfound {} bad commits out of {}",
                 err_commits.len() - 1,
                 commits.len() + err_commits.len()
+            )
+            .red(),
+        ))
+    } else if commits.len() == 0 {
+        Err(anyhow::Error::msg(
+            format!(
+                "\ngit command error: \n0 commits where found from command {:?}",
+                cmd
             )
             .red(),
         ))
