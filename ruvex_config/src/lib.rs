@@ -1,8 +1,11 @@
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Deserialize, Serialize, Debug)]
 pub struct Config {
     pub cc_types: Vec<String>,
+    pub minor_trigger: Vec<String>,
+    pub patch_trigger: Vec<String>,
     pub check: Option<Check>,
 }
 
@@ -25,10 +28,34 @@ impl Config {
         let reader = std::io::BufReader::new(file);
 
         // Read the JSON contents of the file as an instance of `User`.
-        let config = serde_yaml::from_reader(reader)?;
+        let config: Self = serde_yaml::from_reader(reader)?;
 
         // Return the `User`.
         Ok(config)
+    }
+
+    pub fn config_check(&self) -> anyhow::Result<()> {
+        // check if all items in minor_trigger are in cc_types
+        if !(self.minor_trigger.iter().all(|x| self.cc_types.contains(x))) {
+            return Err(anyhow::Error::msg(
+                format!(
+                "\nConfig Error:\nall items of minor_trigger {:?} must be included in cc_types {:?}",
+                self.minor_trigger, self.cc_types,
+            )
+                .red(),
+            ));
+        // check if all items in patch_trigger are in cc_types
+        } else if !(self.patch_trigger.iter().all(|x| self.cc_types.contains(x))) {
+            return Err(anyhow::Error::msg(
+                format!(
+                "\nConfig Error:\nall items of patch_trigger {:?} must be included in cc_types {:?}",
+                self.patch_trigger, self.cc_types,
+            )
+                .red(),
+            ));
+        } else {
+            return Ok(());
+        }
     }
 
     pub fn write_default(path: &str) {
@@ -60,10 +87,48 @@ impl Default for Config {
                 "ci".to_owned(),
                 "chore".to_owned(),
             ],
+            minor_trigger: vec!["feat".to_owned()],
+            patch_trigger: vec!["fix".to_owned()],
             check: Some(Check {
                 name: None,
                 diff: None,
             }),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Config;
+
+    #[test]
+    fn missing_minor_trigger_from_cc_types() {
+        let test_config: Config = Config {
+            cc_types: vec![
+                "feat".to_owned(),
+                "fix".to_owned(),
+                "ci".to_owned(),
+                "chore".to_owned(),
+            ],
+            minor_trigger: vec!["INEXISTENT".to_owned()],
+            patch_trigger: vec!["fix".to_owned()],
+            check: None,
+        };
+        assert!(test_config.config_check().is_err());
+    }
+    #[test]
+    fn missing_patch_trigger_from_cc_types() {
+        let test_config: Config = Config {
+            cc_types: vec![
+                "feat".to_owned(),
+                "fix".to_owned(),
+                "ci".to_owned(),
+                "chore".to_owned(),
+            ],
+            minor_trigger: vec!["feat".to_owned()],
+            patch_trigger: vec!["INEXISTENT".to_owned()],
+            check: None,
+        };
+        assert!(test_config.config_check().is_err());
     }
 }

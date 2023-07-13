@@ -27,11 +27,15 @@ fn main() -> anyhow::Result<()> {
                 default_ruvex_config_path
             }
         };
+        //Init Config
         let config = Config::new(
             &args.config_path.unwrap_or(ruvex_config_path.to_owned()),
             default_ruvex_config_path,
         )
         .unwrap();
+        //Check Config
+        config.config_check()?;
+
         println!("{:?}", config);
         match args.command {
             Some(RuvexCommand::Check { name, diff, format }) => {

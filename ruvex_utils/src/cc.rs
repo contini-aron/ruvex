@@ -150,6 +150,8 @@ mod tests {
             &Config {
                 cc_types,
                 check: None,
+                minor_trigger: vec!["feat".to_owned()],
+                patch_trigger: vec!["fix".to_owned()],
             },
             sha.to_owned(),
         )
@@ -167,6 +169,8 @@ mod tests {
             &Config {
                 cc_types,
                 check: None,
+                minor_trigger: vec!["feat".to_owned()],
+                patch_trigger: vec!["fix".to_owned()],
             },
             sha.to_owned(),
         );
