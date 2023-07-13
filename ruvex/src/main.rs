@@ -38,8 +38,8 @@ fn main() -> anyhow::Result<()> {
 
         println!("{:?}", config);
         match args.command {
-            Some(RuvexCommand::Check { name, diff, format }) => {
-                ruvex_commands::check(name, diff, format, &config)?
+            Some(RuvexCommand::Check { name, format }) => {
+                ruvex_commands::check(name, format, &config)?
             }
             _ => {}
         }

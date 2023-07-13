@@ -2,8 +2,8 @@ use anyhow;
 use colored::Colorize;
 use prettytable::{color, Attr, Cell, Row, Table};
 use ruvex_config::Config;
-use ruvex_utils::ConventionalCommit;
-use std::process::Command;
+use ruvex_utils::{git, ConventionalCommit};
+use std::process::Output;
 
 //apply \n each n chars
 fn return_nch(to_parse: &str, n_char: usize) -> String {
@@ -22,39 +22,25 @@ fn return_nch(to_parse: &str, n_char: usize) -> String {
         .collect::<String>()
 }
 
-pub fn check(
-    name: Option<String>,
-    diff: Option<String>,
-    return_n: Option<usize>,
-    config: &Config,
-) -> anyhow::Result<()> {
+pub fn check(name: Option<String>, return_n: Option<usize>, config: &Config) -> anyhow::Result<()> {
     let sep = "################################################";
     println!("\n{}\n# CHECK\n{}", sep, sep);
-    let mut cmd = Command::new("git");
-    let mut log_print = Command::new("git");
-    cmd.arg("log");
-    log_print.arg("log");
+    let mut cmd: Vec<String> = Vec::new();
+    let mut log_print: Vec<String> = Vec::new();
+    log_print.extend_from_slice(&[
+        "--oneline".to_owned(),
+        "--decorate".to_owned(),
+        "--graph".to_owned(),
+    ]);
+    cmd.extend_from_slice(&["--no-decorate".to_owned(), "--format=\"%h%n%B\"".to_owned()]);
     if let Some(name) = name {
-        if let Some(diff) = diff {
-            log_print.arg([diff.clone(), "..".to_string(), name.clone()].concat());
-            cmd.arg([diff, "..".to_string(), name].concat());
-        } else {
-            log_print.arg(name.clone());
-            cmd.arg(name);
-        }
+        log_print.push(name.clone());
+        cmd.push(name);
     }
-    log_print.arg("--oneline");
-    log_print.arg("--decorate");
-    log_print.arg("--graph");
     //println!("{:?}", log_print);
-    print!(
-        "LOG:\n{}",
-        String::from_utf8(log_print.output().unwrap().stdout).unwrap()
-    );
-    cmd.arg("--no-decorate");
-    cmd.arg("--format=\"%h%n%B\"");
     //println!("{:?}", cmd);
-    let out = cmd.output().unwrap();
+    print!("LOG:\n{}", String::from_utf8(git::log(&log_print)?.stdout)?);
+    let out: Output = git::log(&cmd)?;
     //println!("{:?}", out);
     if !out.stderr.is_empty() {
         return Err(anyhow::Error::msg(
@@ -127,8 +113,8 @@ pub fn check(
     } else if commits.len() == 0 {
         Err(anyhow::Error::msg(
             format!(
-                "\ngit command error: \n0 commits where found from command {:?}",
-                cmd
+                "\ngit command error: \n0 commits where found from command:\n\t\t git log {}",
+                cmd.concat()
             )
             .red(),
         ))

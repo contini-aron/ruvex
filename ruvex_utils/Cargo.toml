@@ -8,5 +8,6 @@ edition = "2021"
 [dependencies]
 ruvex_config = {path="../ruvex_config"}
 thiserror = "1.0.40"
+anyhow = "1.0.8"
 regex="1"
 clap = { version = "4.2.7", features = ["derive"] }
