@@ -16,22 +16,36 @@ pub struct RuvexArgs {
     #[arg(long)]
     /// create a default config file in $HOME/.config
     pub create_default: bool,
+
+    /// ignore prerelease tags when computing current version
+    #[arg(short, long)]
+    pub ignore_prereleases: bool,
 }
 
 #[derive(Subcommand, Debug)]
 pub enum RuvexCommand {
-    ///check if commit are CC compliant
+    ///check if found commits are CC compliant, syntax is similar to git log
     Check {
-        ///branch or tag name to check for CC compliance
-        #[arg()]
-        name: Option<String>,
+        ///branch or tag name to check for CC compliance,
+        ///"git log" sintax is supported e.g. branch..main
+        #[arg(num_args(0..))]
+        name: Option<Vec<String>>,
 
-        ///branch or a tag to diff from
-        #[arg(short, long)]
-        diff: Option<String>,
-
-        ///format error table by returning at nth char (default 40)
+        ///format error table message by returning at nth char (default 40)
         #[arg(short, long)]
         format: Option<usize>,
+    },
+    Tag {
+        #[arg(short, long)]
+        merged: Option<String>,
+
+        #[arg(short, long)]
+        no_merged: Option<String>,
+
+        #[arg(long)]
+        ignore_prereleases: bool,
+
+        #[arg(num_args(0..))]
+        name: Option<Vec<String>>,
     },
 }

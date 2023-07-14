@@ -7,6 +7,14 @@ pub struct Config {
     pub minor_trigger: Vec<String>,
     pub patch_trigger: Vec<String>,
     pub check: Option<Check>,
+    pub tag: Option<Tag>
+}
+
+#[derive(Clone, Deserialize, Serialize, Debug)]
+pub struct Tag {
+    pub merged: Option<String>,
+    pub no_merged: Option<String>,
+    pub ignore_prereleases: Option<bool>
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug)]
@@ -37,13 +45,13 @@ impl Config {
     pub fn config_check(&self) -> anyhow::Result<()> {
         // check if all items in minor_trigger are in cc_types
         if !(self.minor_trigger.iter().all(|x| self.cc_types.contains(x))) {
-            return Err(anyhow::Error::msg(
+            Err(anyhow::Error::msg(
                 format!(
                 "\nConfig Error:\nall items of minor_trigger {:?} must be included in cc_types {:?}",
                 self.minor_trigger, self.cc_types,
             )
                 .red(),
-            ));
+            ))
         // check if all items in patch_trigger are in cc_types
         } else if !(self.patch_trigger.iter().all(|x| self.cc_types.contains(x))) {
             return Err(anyhow::Error::msg(
@@ -63,7 +71,7 @@ impl Config {
             .write(true)
             .create(true)
             .open(path)
-            .expect(&format!("Error, couldn't open {}", path));
+            .unwrap_or_else(|_| panic!("Error, couldn't open {}", path));
         serde_yaml::to_writer(f, &Self::default()).unwrap()
     }
 
@@ -93,6 +101,11 @@ impl Default for Config {
                 name: None,
                 diff: None,
             }),
+            tag: Some(Tag {
+                merged: None,
+                no_merged: None,
+                ignore_prereleases: None,
+            }),
         }
     }
 }
@@ -113,6 +126,7 @@ mod tests {
             minor_trigger: vec!["INEXISTENT".to_owned()],
             patch_trigger: vec!["fix".to_owned()],
             check: None,
+            tag: None,
         };
         assert!(test_config.config_check().is_err());
     }
@@ -128,6 +142,7 @@ mod tests {
             minor_trigger: vec!["feat".to_owned()],
             patch_trigger: vec!["INEXISTENT".to_owned()],
             check: None,
+            tag: None,
         };
         assert!(test_config.config_check().is_err());
     }

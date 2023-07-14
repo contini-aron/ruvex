@@ -12,3 +12,4 @@ prettytable-rs = "0.10"
 ruvex_config = {path="../ruvex_config"}
 ruvex_utils = {path="../ruvex_utils"}
 thiserror = "1.0.40"
+yad_semver = "1.0.0"

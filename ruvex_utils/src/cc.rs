@@ -1,14 +1,22 @@
 use crate::errors::ConventionalCommitParseError;
+use crate::SemVerChangeType;
 use core::fmt;
 use regex::Regex;
 use ruvex_config::Config;
+
+pub trait CCVec {
+    fn is_patch(&self) -> bool;
+    fn is_minor(&self) -> bool;
+    fn is_major(&self) -> bool;
+    fn max_change(&self) -> SemVerChangeType;
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ConventionalCommit {
     commit_type: String,       // feat
     short_sha: String,         //
     scope: Option<String>,     // ()
-    breaking_change: bool,     // !
+    change: SemVerChangeType,  // !
     short_description: String, // : to \n both excluded
     body: Option<String>,      // remainder of commit message
     footer: Option<String>,    // optional footer
@@ -19,7 +27,7 @@ pub struct ConventionalCommit {
 impl fmt::Display for ConventionalCommit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut bc: &str = "";
-        if self.breaking_change {
+        if self.change == SemVerChangeType::Major {
             bc = "!"
         }
         if let Some(ref bd) = self.body {
@@ -34,8 +42,32 @@ impl fmt::Display for ConventionalCommit {
     }
 }
 
+impl CCVec for Vec<ConventionalCommit> {
+    fn is_patch(&self) -> bool {
+        self.iter().all(|x| x.is_patch()) && !self.is_major()
+    }
+    fn is_minor(&self) -> bool {
+        self.iter().any(|x| x.is_minor()) && !self.is_major()
+    }
+    fn is_major(&self) -> bool {
+        self.iter().any(|x| x.is_major())
+    }
+    fn max_change(&self) -> SemVerChangeType {
+        self.iter().map(|x| x.change.clone()).max().unwrap()
+    }
+}
+
 impl ConventionalCommit {
-    #[allow(dead_code)]
+    fn is_patch(&self) -> bool {
+        self.change == SemVerChangeType::Minor
+    }
+    fn is_minor(&self) -> bool {
+        self.change == SemVerChangeType::Minor
+    }
+
+    fn is_major(&self) -> bool {
+        self.change == SemVerChangeType::Major
+    }
     pub fn new(
         to_parse: &str,
         config: &Config,
@@ -44,7 +76,7 @@ impl ConventionalCommit {
         // check for :
         let mut cc_type: String;
         let mut scope: Option<String>;
-        let mut breaking_change: bool = false;
+        let mut change: SemVerChangeType;
         let regex: Regex = Regex::new(r"\(.+\)").unwrap();
         let short_description: String;
         let mut body: Option<String>;
@@ -82,8 +114,14 @@ impl ConventionalCommit {
 
         //check for ! and pop it
         if cc_type.ends_with('!') {
-            breaking_change = true;
+            change = SemVerChangeType::Major;
             cc_type = cc_type.replace('!', "");
+        } else if config.minor_trigger.contains(&cc_type) {
+            change = SemVerChangeType::Minor;
+        } else if config.patch_trigger.contains(&cc_type) {
+            change = SemVerChangeType::Patch;
+        } else {
+            change = SemVerChangeType::None;
         }
 
         // check if commit type is valid
@@ -124,14 +162,14 @@ impl ConventionalCommit {
         // check for BREAKING-CHANGE in footer
         if let Some(ref ft) = footer {
             if ft.contains("BREAKING-CHANGE: ") || ft.contains("BREAKING CHANGE: ") {
-                breaking_change = true;
+                change = SemVerChangeType::Major;
             }
         }
         Ok(ConventionalCommit {
             commit_type: cc_type,
             short_sha,
             scope,
-            breaking_change,
+            change,
             short_description,
             body,
             footer,
@@ -141,6 +179,7 @@ impl ConventionalCommit {
 
 #[cfg(test)]
 mod tests {
+    use super::SemVerChangeType;
     use crate::errors::ConventionalCommitParseError;
     use crate::ConventionalCommit;
     use ruvex_config::Config;
@@ -150,6 +189,7 @@ mod tests {
             &Config {
                 cc_types,
                 check: None,
+                tag: None,
                 minor_trigger: vec!["feat".to_owned()],
                 patch_trigger: vec!["fix".to_owned()],
             },
@@ -169,6 +209,7 @@ mod tests {
             &Config {
                 cc_types,
                 check: None,
+                tag: None,
                 minor_trigger: vec!["feat".to_owned()],
                 patch_trigger: vec!["fix".to_owned()],
             },
@@ -185,7 +226,7 @@ mod tests {
             commit_type: "feat".to_owned(),
             short_sha: "ababa".to_owned(),
             scope: Some("optional scope".to_owned()),
-            breaking_change: false,
+            change: SemVerChangeType::Minor,
             short_description: "good commit".to_owned(),
             body: Some("this is a classic commit".to_owned()),
             footer: None,
@@ -201,7 +242,7 @@ mod tests {
             commit_type: "feat".to_owned(),
             short_sha: "ababa".to_owned(),
             scope: Some("optional scope".to_owned()),
-            breaking_change: false,
+            change: SemVerChangeType::Minor,
             short_description: "good commit".to_owned(),
             body: Some("this is a classic commit".to_owned()),
             footer: None,
@@ -214,7 +255,7 @@ mod tests {
             commit_type: "feat".to_owned(),
             short_sha: "ababa".to_owned(),
             scope: Some("optional scope".to_owned()),
-            breaking_change: false,
+            change: SemVerChangeType::Minor,
             short_description: "good commit".to_owned(),
             body: Some("this is a classic commit".to_owned()),
             footer: None,
@@ -230,7 +271,7 @@ mod tests {
             commit_type: "feat".to_owned(),
             short_sha: "ababa".to_owned(),
             scope: None,
-            breaking_change: false,
+            change: SemVerChangeType::Minor,
             short_description: "good commit".to_owned(),
             body: None,
             footer: None,
@@ -246,7 +287,7 @@ mod tests {
             commit_type: "feat".to_owned(),
             short_sha: "ababa".to_owned(),
             scope: None,
-            breaking_change: true,
+            change: SemVerChangeType::Major,
             short_description: "good commit".to_owned(),
             body: None,
             footer: None,
@@ -262,7 +303,7 @@ mod tests {
             commit_type: "feat".to_owned(),
             short_sha: "ababa".to_owned(),
             scope: None,
-            breaking_change: true,
+            change: SemVerChangeType::Major,
             short_description: "good commit".to_owned(),
             body: Some("bodyisbody".to_owned()),
             footer: Some("BREAKING-CHANGE: sad change".to_owned()),
@@ -278,7 +319,7 @@ mod tests {
             commit_type: "feat".to_owned(),
             short_sha: "ababa".to_owned(),
             scope: None,
-            breaking_change: false,
+            change: SemVerChangeType::Minor,
             short_description: "good commit".to_owned(),
             body: Some("bodyisbody".to_owned()),
             footer: Some("change: sad change".to_owned()),
@@ -323,5 +364,84 @@ mod tests {
             sha,
             ConventionalCommitParseError::EmptyScope,
         );
+    }
+
+    use crate::cc::CCVec;
+    #[test]
+    fn breaking_change_edge_cases() {
+        let cc = ConventionalCommit {
+            commit_type: "feat".to_owned(),
+            short_sha: "ababa".to_owned(),
+            scope: None,
+            change: SemVerChangeType::Major,
+            short_description: "good commit".to_owned(),
+            body: Some("bodyisbody".to_owned()),
+            footer: Some("BREAKING-CHANGE: sad change".to_owned()),
+        };
+
+        assert!(cc.is_major());
+        assert!(!cc.is_minor());
+        assert!(!cc.is_patch());
+    }
+    #[test]
+    fn vector_of_cc_major() {
+        let cc = ConventionalCommit {
+            commit_type: "feat".to_owned(),
+            short_sha: "ababa".to_owned(),
+            scope: None,
+            change: SemVerChangeType::Major,
+            short_description: "good commit".to_owned(),
+            body: Some("bodyisbody".to_owned()),
+            footer: Some("BREAKING-CHANGE: sad change".to_owned()),
+        };
+        let cc2 = ConventionalCommit {
+            commit_type: "feat".to_owned(),
+            short_sha: "ababa".to_owned(),
+            scope: None,
+            change: SemVerChangeType::Minor,
+            short_description: "good commit".to_owned(),
+            body: Some("bodyisbody".to_owned()),
+            footer: Some("BREAKING-CHANGE: sad change".to_owned()),
+        };
+        let cc3 = ConventionalCommit {
+            commit_type: "fix".to_owned(),
+            short_sha: "ababa".to_owned(),
+            scope: None,
+            change: SemVerChangeType::Minor,
+            short_description: "good commit".to_owned(),
+            body: Some("bodyisbody".to_owned()),
+            footer: Some("test".to_owned()),
+        };
+        let vector: Vec<ConventionalCommit> = vec![cc, cc2, cc3];
+        assert!(vector.is_major());
+        assert!(!vector.is_minor());
+        assert!(!vector.is_patch());
+        assert!(vector.max_change() == SemVerChangeType::Major);
+    }
+    #[test]
+    fn vector_of_cc_minor() {
+        let cc = ConventionalCommit {
+            commit_type: "feat".to_owned(),
+            short_sha: "ababa".to_owned(),
+            scope: None,
+            change: SemVerChangeType::Minor,
+            short_description: "good commit".to_owned(),
+            body: Some("bodyisbody".to_owned()),
+            footer: Some("abababa".to_owned()),
+        };
+        let cc2 = ConventionalCommit {
+            commit_type: "fix".to_owned(),
+            short_sha: "ababa".to_owned(),
+            scope: None,
+            change: SemVerChangeType::Patch,
+            short_description: "good commit".to_owned(),
+            body: Some("bodyisbody".to_owned()),
+            footer: Some("test".to_owned()),
+        };
+        let vector: Vec<ConventionalCommit> = vec![cc, cc2];
+        assert!(!vector.is_major());
+        assert!(vector.is_minor());
+        assert!(!vector.is_patch());
+        assert!(vector.max_change() == SemVerChangeType::Minor);
     }
 }

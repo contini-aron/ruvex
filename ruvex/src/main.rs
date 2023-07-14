@@ -39,8 +39,14 @@ fn main() -> anyhow::Result<()> {
         println!("{:?}", config);
         match args.command {
             Some(RuvexCommand::Check { name, format }) => {
-                ruvex_commands::check(name, format, &config)?
+                ruvex_commands::check(name, format, &config, true)?;
             }
+            Some(RuvexCommand::Tag {
+                merged,
+                no_merged,
+                ignore_prereleases,
+                name,
+            }) => ruvex_commands::tag(name, merged, no_merged, ignore_prereleases, &config)?,
             _ => {}
         }
     }

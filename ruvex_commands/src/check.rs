@@ -22,35 +22,36 @@ fn return_nch(to_parse: &str, n_char: usize) -> String {
         .collect::<String>()
 }
 
-pub fn check(name: Option<String>, return_n: Option<usize>, config: &Config) -> anyhow::Result<()> {
+pub fn check(
+    name: Option<Vec<String>>,
+    return_n: Option<usize>,
+    config: &Config,
+    raise_error: bool,
+) -> anyhow::Result<(Vec<ConventionalCommit>, Table)> {
     let sep = "################################################";
     println!("\n{}\n# CHECK\n{}", sep, sep);
-    let mut cmd: Vec<String> = Vec::new();
-    let mut log_print: Vec<String> = Vec::new();
-    log_print.extend_from_slice(&[
-        "--oneline".to_owned(),
-        "--decorate".to_owned(),
-        "--graph".to_owned(),
-    ]);
-    cmd.extend_from_slice(&["--no-decorate".to_owned(), "--format=\"%h%n%B\"".to_owned()]);
-    if let Some(name) = name {
-        log_print.push(name.clone());
-        cmd.push(name);
-    }
+    let mut cmd: Vec<&str> = vec!["--no-decorate", "--format=\"%h%n%B\""];
+    let mut log_print: Vec<&str> = vec!["--oneline", "--decorate", "--graph"];
+    let out: Output;
+    let debug_cmd: String;
+
+    (out, debug_cmd) = match name {
+        Some(name) => {
+            let tmp: Vec<&str> = name.iter().map(|x| &**x).collect();
+            log_print = [log_print, tmp.clone()].concat();
+            print!("LOG:\n{}", String::from_utf8(git::log(&log_print)?.stdout)?);
+
+            cmd = [cmd, tmp].concat();
+            (git::log(&cmd)?, cmd.join(" "))
+        }
+        None => {
+            print!("LOG:\n{}", String::from_utf8(git::log(&log_print)?.stdout)?);
+            (git::log(&cmd)?, cmd.join(" "))
+        }
+    };
     //println!("{:?}", log_print);
     //println!("{:?}", cmd);
-    print!("LOG:\n{}", String::from_utf8(git::log(&log_print)?.stdout)?);
-    let out: Output = git::log(&cmd)?;
     //println!("{:?}", out);
-    if !out.stderr.is_empty() {
-        return Err(anyhow::Error::msg(
-            format!(
-                "git command error:\n{}",
-                String::from_utf8(out.stderr).unwrap()
-            )
-            .red(),
-        ));
-    }
     let result = String::from_utf8(out.stdout).unwrap();
     //println!("{:#?}", &result);
     let rows = result.split("\"\n");
@@ -100,7 +101,7 @@ pub fn check(name: Option<String>, return_n: Option<usize>, config: &Config) -> 
         }
     }
 
-    if err_commits.len() > 1 {
+    if err_commits.len() > 1 && raise_error {
         err_commits.printstd();
         Err(anyhow::Error::msg(
             format!(
@@ -110,11 +111,11 @@ pub fn check(name: Option<String>, return_n: Option<usize>, config: &Config) -> 
             )
             .red(),
         ))
-    } else if commits.len() == 0 {
+    } else if commits.is_empty() {
         Err(anyhow::Error::msg(
             format!(
                 "\ngit command error: \n0 commits where found from command:\n\t\t git log {}",
-                cmd.concat()
+                debug_cmd
             )
             .red(),
         ))
@@ -123,6 +124,6 @@ pub fn check(name: Option<String>, return_n: Option<usize>, config: &Config) -> 
             "{}",
             format!("\n\nAll commits out of {} checked are ok", commits.len()).green()
         );
-        Ok(())
+        Ok((commits, err_commits))
     }
 }
