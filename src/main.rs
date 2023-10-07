@@ -1,6 +1,6 @@
 use clap::Parser;
-use ruvex_config::Config;
-use ruvex_utils::cli::{RuvexArgs, RuvexCommand};
+use ruvex::config::Config;
+use ruvex::utils::cli::{RuvexArgs, RuvexCommand};
 
 fn main() -> anyhow::Result<()> {
     let args = RuvexArgs::parse();
@@ -39,14 +39,14 @@ fn main() -> anyhow::Result<()> {
         println!("{:?}", config);
         match args.command {
             Some(RuvexCommand::Check { name, format }) => {
-                ruvex_commands::check(name, format, &config, true)?;
+                ruvex::command::check(name, format, &config, true)?;
             }
             Some(RuvexCommand::Tag {
                 merged,
                 no_merged,
                 ignore_prereleases,
                 name,
-            }) => ruvex_commands::tag(name, merged, no_merged, ignore_prereleases, &config)?,
+            }) => ruvex::command::tag(name, merged, no_merged, ignore_prereleases, &config)?,
             _ => {}
         }
     }

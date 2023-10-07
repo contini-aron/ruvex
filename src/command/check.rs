@@ -1,8 +1,7 @@
-use anyhow;
+use crate::config::Config;
+use crate::utils::{git, ConventionalCommit};
 use colored::Colorize;
 use prettytable::{color, Attr, Cell, Row, Table};
-use ruvex_config::Config;
-use ruvex_utils::{git, ConventionalCommit};
 use std::process::Output;
 
 //apply \n each n chars

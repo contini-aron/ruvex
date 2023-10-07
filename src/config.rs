@@ -7,14 +7,14 @@ pub struct Config {
     pub minor_trigger: Vec<String>,
     pub patch_trigger: Vec<String>,
     pub check: Option<Check>,
-    pub tag: Option<Tag>
+    pub tag: Option<Tag>,
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug)]
 pub struct Tag {
     pub merged: Option<String>,
     pub no_merged: Option<String>,
-    pub ignore_prereleases: Option<bool>
+    pub ignore_prereleases: Option<bool>,
 }
 
 #[derive(Clone, Deserialize, Serialize, Debug)]
@@ -112,7 +112,7 @@ impl Default for Config {
 
 #[cfg(test)]
 mod tests {
-    use crate::Config;
+    use crate::config::Config;
 
     #[test]
     fn missing_minor_trigger_from_cc_types() {

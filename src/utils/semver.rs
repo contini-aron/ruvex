@@ -183,7 +183,7 @@ impl FromStr for SemVer {
 #[cfg(test)]
 mod test {
 
-    use crate::semver::SemVer;
+    use crate::utils::semver::SemVer;
     const PRECEDENCE_STRINGS: [&str; 24] = [
         "0.1.0-alpha",
         "0.1.0-alpha.1",

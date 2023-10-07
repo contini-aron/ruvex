@@ -1,9 +1,9 @@
-use crate::check;
-use anyhow;
-use ruvex_config::Config;
-use ruvex_utils::git;
-use ruvex_utils::semver::SemVer;
-use ruvex_utils::{CCVec, SemVerChangeType};
+use crate::command::check::check;
+use crate::config::Config;
+use crate::utils::git;
+use crate::utils::semver::SemVer;
+use crate::utils::CCVec;
+use crate::utils::SemVerChangeType;
 use std::process::Output;
 // use ruvex_config::Config;
 
@@ -201,10 +201,10 @@ pub fn tag(
 mod tests {
     use std::vec;
 
-    use ruvex_config::{Config, Tag};
-    use ruvex_utils::semver::SemVer;
+    use crate::config::{Config, Tag};
+    use crate::utils::semver::SemVer;
 
-    use crate::tag::{latest_tag, parse_tags};
+    use crate::command::tag::{latest_tag, parse_tags};
     #[test]
     fn test_parse() {
         let control = "0.1.0\ntest";

@@ -1,8 +1,8 @@
-use crate::errors::ConventionalCommitParseError;
-use crate::SemVerChangeType;
+use crate::config::Config;
+use crate::utils::errors::ConventionalCommitParseError;
+use crate::utils::SemVerChangeType;
 use core::fmt;
 use regex::Regex;
-use ruvex_config::Config;
 
 pub trait CCVec {
     fn is_patch(&self) -> bool;
@@ -180,9 +180,9 @@ impl ConventionalCommit {
 #[cfg(test)]
 mod tests {
     use super::SemVerChangeType;
-    use crate::errors::ConventionalCommitParseError;
-    use crate::ConventionalCommit;
-    use ruvex_config::Config;
+    use crate::config::Config;
+    use crate::utils::errors::ConventionalCommitParseError;
+    use crate::utils::ConventionalCommit;
     fn test_cc(cc_message: &str, cc_types: Vec<String>, sha: &str, cc_check: ConventionalCommit) {
         let cc = ConventionalCommit::new(
             cc_message,
@@ -366,7 +366,7 @@ mod tests {
         );
     }
 
-    use crate::cc::CCVec;
+    use crate::utils::cc::CCVec;
     #[test]
     fn breaking_change_edge_cases() {
         let cc = ConventionalCommit {
