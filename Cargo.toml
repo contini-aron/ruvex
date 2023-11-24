@@ -2,19 +2,22 @@
 name = "ruvex"
 version = "0.1.0"
 edition = "2021"
+authors = ["Aron Contini - contini-aron"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = { version = "4.2.7", features = ["derive"] }
-serde = { version = "1.0", features = ["derive"] }
-anyhow = "1.0.8"
-colored = "2.0.4"
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+anyhow = "1"
+colored = "2"
 prettytable-rs = "0.10"
-thiserror = "1.0.40"
+thiserror = "1"
 serde_yaml = "0.9"
 regex = "1"
-lazy_static = "1.4.0"
+lazy_static = "1"
+twelf = "0.12"
+merge = "0.1.0"
 
 [dev-dependencies]
-anyhow = "1.0.8"
+anyhow = "1"
