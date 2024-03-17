@@ -20,6 +20,7 @@
             nativeBuildInputs = with pkgs; [
 	      rustc
 	      cargo
+	      clippy
             ];
           };
     };
