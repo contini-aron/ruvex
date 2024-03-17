@@ -29,16 +29,15 @@ impl Config {
         } else if default_config_path == config_path {
             return Err(anyhow::Error::msg("default path is not a real path"));
         } else {
-            return Err(anyhow::Error::msg("provided path: {}\n does NOT exists"));
+            return Err(anyhow::Error::msg(format!("provided path: {}\n does NOT exists\nIf you would like to generate a default config pass a --create-default flag", config_path)));
         }
         // Open the file in read-only mode with buffer.
         let file = std::fs::File::open(config_path)?;
         let reader = std::io::BufReader::new(file);
 
-        // Read the JSON contents of the file as an instance of `User`.
+        // Read the Yaml contents of the file as an instance of `User`.
         let config: Self = serde_yaml::from_reader(reader)?;
 
-        // Return the `User`.
         Ok(config)
     }
 
