@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::utils::{git, ConventionalCommit};
 use colored::Colorize;
+use log::{debug, info};
 use prettytable::{color, Attr, Cell, Row, Table};
 use std::process::Output;
 
@@ -23,9 +24,9 @@ fn return_nch(to_parse: &str, n_char: usize) -> String {
 
 pub fn check(
     name: Option<Vec<String>>,
-    return_n: Option<usize>,
+    return_n: Option<usize>, // option for format table of error
     config: &Config,
-    raise_error: bool,
+    raise_error: bool, // raise an Error if any non conventional commit is found
 ) -> anyhow::Result<(Vec<ConventionalCommit>, Table)> {
     let sep = "################################################";
     println!("\n{}\n# CHECK\n{}", sep, sep);
@@ -48,14 +49,14 @@ pub fn check(
             (git::log(&cmd)?, cmd.join(" "))
         }
     };
-    //println!("{:?}", log_print);
-    //println!("{:?}", cmd);
-    //println!("{:?}", out);
+    //debug!("{:?}", log_print);
+    //debug!("{:?}", cmd);
+    //debug!("{:?}", out);
     let result = String::from_utf8(out.stdout).unwrap();
-    //println!("{:#?}", &result);
+    debug!("{:#?}", &result);
     let rows = result.split("\"\n");
-    //println!("{:#?}", &rows);
-    //println!("{:#?}", rows.clone().count());
+    debug!("{:#?}", &rows);
+    debug!("{:#?}", rows.clone().count());
 
     let mut commits: Vec<ConventionalCommit> = Vec::new();
 
@@ -119,7 +120,7 @@ pub fn check(
             .red(),
         ))
     } else {
-        println!(
+        info!(
             "{}",
             format!("\n\nAll commits out of {} checked are ok", commits.len()).green()
         );

@@ -1,3 +1,6 @@
+use log::debug;
+use log::info;
+
 use crate::command::check::check;
 use crate::config::Config;
 use crate::utils::git;
@@ -118,9 +121,10 @@ pub fn tag(
     };
 
     let binding = String::from_utf8(out.stdout)?;
-    println!(" binding is {:?}", binding);
+    debug!("git tag command result is {:#?}", binding);
 
     let tags = parse_tags(&binding);
+    info!("tags found are:");
     for tag in &tags {
         print!(" {}", tag);
     }
@@ -139,6 +143,7 @@ pub fn tag(
             Some(
                 name.unwrap()
                     .into_iter()
+                    // if TAG keyword is found in name substitute it with latest_tag
                     .map(|x| x.replace("TAG", latest_tag.unwrap().to_string().as_str()))
                     .collect(),
             ),
