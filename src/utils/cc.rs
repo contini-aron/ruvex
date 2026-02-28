@@ -26,6 +26,7 @@ pub struct ConventionalCommit {
 
 impl fmt::Display for ConventionalCommit {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // bc stands for breaking change
         let mut bc: &str = "";
         if self.change == SemVerChangeType::Major {
             bc = "!"
@@ -262,6 +263,10 @@ mod tests {
         };
         test_cc(cc_message, cc_types, sha, cc);
     }
+
+    // ###################################################################################
+    //   TESTS
+    // ###################################################################################
     #[test]
     fn no_body() {
         let cc_message = "feat: good commit\n";

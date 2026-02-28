@@ -5,6 +5,8 @@ use log::{debug, warn};
 use ruvex::config::Config;
 use ruvex::utils::cli::{RuvexArgs, RuvexCommand};
 use std::path::Path;
+use ruvex::utils::git::raw_log;
+
 
 fn create_default_config_file(config_path: &Path) -> anyhow::Result<()> {
     debug!("trying to create default path {:#?}", config_path);
@@ -15,6 +17,8 @@ fn create_default_config_file(config_path: &Path) -> anyhow::Result<()> {
 }
 
 fn main() -> anyhow::Result<()> {
+    raw_log(".")?;
+
     let env = Env::default().filter_or("RUST_LOG", "info");
 
     env_logger::init_from_env(env);
@@ -40,7 +44,7 @@ fn main() -> anyhow::Result<()> {
 
     // create default config file if asked
     if args.create_default {
-        create_default_config_file(&config_path)?;
+        create_default_config_file(config_path)?;
     }
 
     //Init Config

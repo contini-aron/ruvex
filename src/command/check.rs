@@ -50,7 +50,7 @@ pub fn check(
         }
     };
     //debug!("{:?}", log_print);
-    //debug!("{:?}", cmd);
+   // debug!("{:?}", &cmd);
     //debug!("{:?}", out);
     let result = String::from_utf8(out.stdout).unwrap();
     debug!("{:#?}", &result);
